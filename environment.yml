@@ -1,0 +1,8 @@
+name: noaa-env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python
+  - pip
+  - pydantic-settings
