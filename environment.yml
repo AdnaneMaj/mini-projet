@@ -7,3 +7,7 @@ dependencies:
   - pip
   - pydantic-settings
   - python-hdfs
+  - bs4
+  - fastapi
+  - uvicorn
+  - uvicron-standard

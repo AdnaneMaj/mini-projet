@@ -162,3 +162,4 @@ cython_debug/
 #.idea/
 
 z_test.ipynb
+my_hdfscli.cfg

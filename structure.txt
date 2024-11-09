@@ -1,0 +1,20 @@
+.
+├── environment.yml
+├── README.md
+├── src
+│   ├── assets
+│   ├── controllers
+│   │   ├── BaseController.py
+│   │   └── __init__.py
+│   ├── helpers
+│   │   ├── config.py
+│   │   └── __init__.py
+│   ├── models
+│   │   ├── BaseDataModel.py
+│   │   └── __init__.py
+│   ├── my_hdfscli.cfg
+│   ├── my_hdfscli.cfg.exemple
+│   └── z_test.ipynb
+└── structure.txt
+
+5 directories, 12 files
