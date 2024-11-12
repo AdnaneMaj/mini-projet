@@ -1,15 +1,22 @@
 from bs4 import BeautifulSoup
 import requests
 from typing import Dict,Optional,Any
+import os
+import json
 
 from .BaseDataModel import BaseDataModel
 from .enums import ResponseSignal
 
 class BaseParserModel(BaseDataModel):
-    def __init__(self, hdfs_path_client):
-        super().__init__(hdfs_path_client)
+    def __init__(self):
+        super().__init__()
         self.session = requests.Session()
         self.headers = self.app_settings.PARSER_HEADERS
+
+    def set_checkpoint(self,name):
+        self.checkpoint_name = name
+        print(self.base_dir)
+        self.checkpoint_file = os.path.join(self.base_dir,'assets/'+self.checkpoint_name)
 
     def fetch_content(self, url: str, custom_headers: Optional[Dict[str, str]] = None) -> str:
         """
@@ -35,3 +42,22 @@ class BaseParserModel(BaseDataModel):
         Override this method in specific parser implementations
         """
         raise NotImplementedError("Implement this method in specific parser class")
+    
+    def load_checkpoint(self):
+        """Load previously saved progress if it exists."""
+        if os.path.exists(self.checkpoint_file):
+            try:
+                with open(self.checkpoint_file, 'r') as f:
+                    return json.load(f)
+            except json.JSONDecodeError:
+                return {}
+        else :
+            # Create the file
+            with open(self.checkpoint_file, "w") as file:
+                pass  # Do nothing, just create the empty file
+            return {}
+    
+    def save_checkpoint(self,data:Dict[int,list[int]]):
+        """Save current progress to checkpoint file."""
+        with open(self.checkpoint_file, 'w') as f:
+            json.dump(data, f,indent=4)

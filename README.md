@@ -15,3 +15,8 @@ Set the env and activate it
 $ conda env create -f environment.yml
 $ conda activate noaa-env
 ```
+
+## Run the FastAPI server
+```bash
+$ uvicorn main:app --reload --host 0.0.0.0 --port 5000
+```
