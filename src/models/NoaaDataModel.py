@@ -14,6 +14,7 @@ import gzip
 import shutil
 import subprocess
 import os
+import csv
 
 
 class NooaDataModel(BaseDataModel):
@@ -180,28 +181,81 @@ class NooaDataModel(BaseDataModel):
             raise ValueError(f'Failed to perform map-reduce job on : {station}')
     
         return
-
-
-
-
-    """
     
-    def upload_text_file(self,hdfs_target_dir:str,txt_filename:str,txt_content:str):
+    #_______________________________________________________________________________________________Fetch data for visualisation (using webhdfs)
+    def txt_to_csv(self):
+        """
+        Result.txt file to a csv file
+        """
 
-        # Upload txt to HDFS as a text file
-        with self.client.write(f"{hdfs_target_dir}/{txt_filename}", encoding='utf-8') as hdfs_file:
-            hdfs_file.write(txt_content)
+        # Input and output file paths
+        input_file = os.path.join(self.base_dir,'assets','result.txt')
+        output_file = os.path.join(self.base_dir,'assets','result.csv')
 
-    def download_in_hdfs(self,station:str):
+        # Open the input text file and output CSV file
+        with open(input_file, 'r') as infile, open(output_file, 'w', newline='') as outfile:
+            csv_writer = csv.writer(outfile)
+            
+            # Write the header row
+            csv_writer.writerow(['year', 'mean'])
+            
+            # Process each line in the text file
+            for line in infile:
+                # Split the line into year and mean parts
+                year, mean = line.split('\t')  # Split by tab
+                mean_value = mean.split(':')[1].strip()  # Extract the mean value
+                # Write the year and mean to the CSV file
+                csv_writer.writerow([year, mean_value])
 
-        #foa, our root dir :
-        self.check_folder_existance(folder_name=self.root_dir_name+station)
+        print(f"Data successfully written to {output_file}")
 
-        #Then get start and years and start downoaidng
-        start_year,end_year = list(self.ids_history[station].values())[:2]
 
-        for year in range(int(start_year),int(end_year)+1):
-            pass
-    """
+    def fetch_data(self,station:str):
+        """
+        Fetch Data from HDFS using Webhdfs
+        
+        #set the API
+        webhdfs_url = f'{self.app_settings.NAME_NODE}:{self.app_settings.PORT}/webhdfs/v1/user/root/{Links.ROOT_DIR.value}reducing_results/{station}/part-r-00000?op=OPEN'
+
+        # Output CSV file path
+        output_csv = os.path.join(self.base_dir,'assets','data_to_vis.csv')
+
+        # Fetch the text file from WebHDFS
+        response = requests.get(webhdfs_url)
+
+        # Check if the request was successful
+        if response.status_code == 200:
+            lines = response.text.splitlines()  # Split the file into lines
+
+            # Open the output CSV file and write the data
+            with open(output_csv, 'w', newline='') as outfile:
+                writer = csv.writer(outfile)
+                writer.writerow(["Year", "Mean"])  # Write header
+
+                for line in lines:
+                    year, mean = line.strip().split("\t")  # Split year and mean
+                    mean_value = mean.split(":")[1].strip()  # Extract mean value after "mean:"
+                    writer.writerow([year, mean_value])  # Write row
+        else:
+            raise ValueError(f"Failed to fetch the file. Status code: {response.status_code}")
+        """
+
+        """
+        Using subprocess in a very stupid naif way
+        """
+
+        # Example command
+        result = subprocess.run(self.app_settings.SUBPROCESS_CODE_BEGAN.split() + ['hdfs','dfs','-get',f'/user/root/{Links.ROOT_DIR.value}reducing_results/{station}/part-r-00000','/shared_volume/result.txt'])
+
+        # Source and destination paths
+        source = os.path.join(NooaDataModel.home_directory,self.app_settings.DOCKER_SHARED_VOL_PATH,'result.txt')
+        destination = os.path.join(self.base_dir,'assets','result.txt')
+        csv_destination = os.path.join(self.base_dir,'assets','result.csv')
+
+        # Move the file to assets
+        shutil.move(source, destination)
+
+        #Transform to CSV file of speicifc columns
+        self.txt_to_csv(destination,csv_destination)
 
 

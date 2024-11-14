@@ -13,3 +13,5 @@ dependencies:
   - uvicron-standard
   - request
   - streamlit
+  - matplotliby
+  

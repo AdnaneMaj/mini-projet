@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     JAR_NAME: str
     PACKAGE_NAME: str
     JOB_CLASS_NAME: str
+    NAME_NODE:str
+    PORT:str
 
     class Config:
         env_file = ".env"
