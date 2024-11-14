@@ -37,12 +37,6 @@ class BaseParserModel(BaseDataModel):
         """
         return BeautifulSoup(html_content, parser_type)
     
-    def extract_data(self, soup: BeautifulSoup) -> Dict[str, Any]:
-        """
-        Override this method in specific parser implementations
-        """
-        raise NotImplementedError("Implement this method in specific parser class")
-    
     def load_checkpoint(self):
         """Load previously saved progress if it exists."""
         if os.path.exists(self.checkpoint_file):

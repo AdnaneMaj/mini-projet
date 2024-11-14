@@ -5,7 +5,6 @@
 
 from helpers.config import get_settings
 
-from hdfs import Config,InsecureClient
 import os
 import json
 
@@ -13,7 +12,6 @@ class BaseDataModel:
 
     def __init__(self):
         self.app_settings = get_settings()
-        self.client:InsecureClient = Config(self.app_settings.HDFS_CONFIG_FILE_PATH).get_client() #Connect to WebHDFS 
         self.base_dir = os.path.dirname(os.path.dirname(__file__))
         self.metadata_file = os.path.join(
             self.base_dir,
@@ -35,12 +33,16 @@ class BaseDataModel:
             self.base_dir,
             "assets/data.json"
         )  
-        self.root_dir_name = "nooa_dir/"
+        self.subprocess_begin = ['docker','exec','-it','hadoop-master','bash']
+        
+        self.set_data()
 
-        self.countries = None
-        self.ids_history = None
-        self.cities = None
-
+    def set_data(self):
+        self.countries = self.load_json(self.countries_file)
+        self.ids_history = self.load_json(self.ids_history_file)
+        self.cities = self.load_json(self.cities_file)
+        self.data = self.load_json(self.data_file)
+    
     def save_json(self,file_path,metadata):
         # Save the dictionary as a JSON file
         with open(file_path, "w") as json_file:
@@ -48,7 +50,10 @@ class BaseDataModel:
 
     def load_json(self,file_path):
         # Load the JSON file into a Python dictionary
-        with open(file_path, "r") as json_file:     ##########" Handle errors"
-            data = json.load(json_file)
-        
+        try:
+            with open(file_path, "r") as json_file:     ##########" Handle errors"
+                data = json.load(json_file)
+        except FileNotFoundError:
+            return
+            
         return data

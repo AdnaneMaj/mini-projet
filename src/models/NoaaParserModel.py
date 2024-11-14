@@ -1,9 +1,7 @@
 from .BaseParserModel import BaseParserModel
 from .enums import Links
 
-from bs4 import BeautifulSoup
-from typing import Dict,Any
-import json
+from typing import Dict
 import requests
 
 """
@@ -16,20 +14,6 @@ import requests
 class NoaaParserModel(BaseParserModel):
     def __init__(self):
         super().__init__()
-
-    #overrider extract_data method
-    def extract_data(self, soup: BeautifulSoup,year:int) -> Dict[str, Any]:
-        """
-        Implement specific parsing logic for your target website
-        """
-        data = {
-            'timestamp': 'test',
-            # Add your specific extraction logic here
-            # Example:
-            # 'title': soup.find('h1', class_='main-title').text.strip(),
-            # 'content': soup.find('div', class_='content').text.strip(),
-        }
-        return data
     
     def extract_metadata(self): #--TO-DO-- : The logic of the two download need to be separated
         """
@@ -74,7 +58,7 @@ class NoaaParserModel(BaseParserModel):
 
         if response.status_code == 200:
             for line in lines[start_index+2:]:
-                usaf,wban,station_name,country_code,start_year,end_year = line[:6],line[7:12],line[13:43],line[43:45],line[-8:-4],line[-17:-13]
+                usaf,wban,station_name,country_code,start_year,end_year = line[:6],line[7:12],line[13:43],line[43:45],line[-17:-13],line[-8:-4]
                 ids_history[usaf+'-'+wban]={"start":start_year,"end":end_year,"station":station_name.strip(),"country":country_code}
                 city_decode[usaf+'-'+wban]=station_name.strip()
                 city_encode[station_name.strip()]=usaf+'-'+wban
@@ -96,14 +80,8 @@ class NoaaParserModel(BaseParserModel):
         soup = self.parse_html(content) #get the soup
         links = soup.find_all('a') #find all links
         
-        usaf_list = []
-        wban_list = []
-        for link in links[5:]:
-            usaf,wban = link["href"].split("-")[:2]
-            usaf_list.append(usaf)
-            wban_list.append(wban)
-
-        return usaf_list,wban_list
+        usaf_wban = [link['href'][:12] for link in links[5:]]
+        return usaf_wban
 
     def extract_all_links(self,checkpoint_name = "data_checkpoint.json"):
         """
@@ -129,16 +107,16 @@ class NoaaParserModel(BaseParserModel):
                 print(f"Year {year} skipped")
             else :
                 try:
-                    usaf,wban = self.extract_year_links(year)
-                    data[year]={"USAF":usaf,"WBAN":wban}
-                    print(f'{len(usaf)}{len(wban)} stations extracted from year {year}')
+                    usaf_wban = self.extract_year_links(year)
+                    data[year]=usaf_wban
                     # Save progress after each successful year
                     self.save_checkpoint(data)
+                    print(f"Year {year} scraped succefult")
                 except:
                     failed_years.append(year)
                     print(f"Year {year} failed to scrap")
 
         # Save the dictionary as a JSON file
         self.save_json(self.data_file,data)
-
+        self.data = self.load_json(self.data_file)
         return failed_years
