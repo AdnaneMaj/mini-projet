@@ -11,3 +11,5 @@ dependencies:
   - fastapi
   - uvicorn
   - uvicron-standard
+  - request
+  - streamlit
